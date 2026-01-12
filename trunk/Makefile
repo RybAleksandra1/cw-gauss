@@ -6,7 +6,7 @@ test: all
 	@./bin/gauss dane/prawidlowe2A.txt dane/prawidlowe5A.txt
 
 	@echo "\n    TEST 2: Element diagonalny równy 0"
-	@./bin/gauss dane/zero.txt zero1.txt
+	@./bin/gauss dane/zero.txt dane/zero1.txt
 
 	@echo "\n    TEST 3: Macierz osobliwa"
 	@./bin/gauss dane/osobliwa.txt dane/osobliwa1.txt || echo "Kod bledu - test zakonczyl sie prawidlowo"
