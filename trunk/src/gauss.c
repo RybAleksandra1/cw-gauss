@@ -1,46 +1,77 @@
-#include "gauss.h"
-#include <math.h>  // Może się przydać do abs() w przyszłości, warto dodać
+##include "gauss.h"
+#include <stdio.h>
+#include <math.h>
+
+/*
+ tu robimy funkcje pomocnicza: 
+ Wybor elementu diagonalnego (pivot)
+ */
+void pivot_selection(Matrix *mat, Matrix *b, int k) {
+    int max_row = k;
+    double max_val = fabs(mat->data[k][k]);
+
+    /* 1. Szukamy wiersza z najwiekszym elementem w kolumnie k */
+    for (int i = k + 1; i < mat->r; i++) {
+        if (fabs(mat->data[i][k]) > max_val) {
+            max_val = fabs(mat->data[i][k]);
+            max_row = i;
+        }
+    }
+
+    /* 2. jesli znaleziono lepszy to zamiana wierszy */
+    if (max_row != k) {
+        /* zamiana wskaznikow w macierzy A */
+        double *tmp_row = mat->data[k];
+        mat->data[k] = mat->data[max_row];
+        mat->data[max_row] = tmp_row;
+
+        /* zamiana wartosci w wektorze b (tutaj zamieniamy liczby) */
+        double tmp_b = b->data[k][0];
+        b->data[k][0] = b->data[max_row][0];
+        b->data[max_row][0] = tmp_b;
+    }
+}
 
 /**
- * Zwraca 0 - elimnacja zakonczona sukcesem
- * Zwraca 1 - macierz osobliwa - dzielenie przez 0
+ * wynik intepretacja
+ * 0 - eliminacja gaussa zakonczona sukcesem
+ * 1 - macierz osobliwa czyli wystepuje dzielenie przez 0
  */
 int eliminate(Matrix *mat, Matrix *b){
-    int n = mat->r;
-    int k, i, j;
+    /* Polaczylam zmienne */
+    int i, j, k;
     double factor;
 
-    // Sprawdzamy czy macierze w ogole istnieja i czy maja dobre wymiary 
+    /* Sprawdzenie czy podane dane sa popawne */
     if (!mat || !b || mat->r != mat->c || mat->r != b->r) {
-        return 1; // Błąd błędnych danych
+        fprintf(stderr, "Blad: Nieprawidlowe rozmiary macierzy lub brak danych!\n");
+        return 1;
     }
 
-    // TRYWIALNA ELIMINACJA GAUSSA 
-
-    // petla po kolumnach (krokach eliminacji)
-    for(k = 0; k < n - 1; k++) {
+    /* Glowna petla eliminacji */
+    for(i = 0; i < mat->r - 1; i++){
         
-        // Sprawdzenie czy element na diagonalnej nie jest 0
-        if (mat->data[k][k] == 0) {
-            return 1; // Blad, mamy dzielenie przez 0 (macierz osobliwa)
+        /* wywolanie funkcji pivota */
+        pivot_selection(mat, b, i);
+
+        /* czy element na diagonali nie jest 0 */
+        if(fabs(mat->data[i][i]) < 1e-12){
+            return 1; // Macierz osobliwa
         }
 
-        // petla po wierszach 
-	for(i = k + 1; i < n; i++) {
+        /* zwykla eliminacja */
+        for(j = i + 1; j < mat->r; j++){
+            factor = mat->data[j][i] / mat->data[i][i];
             
-            // Obliczenie wspolczynnika, przez ktory mnozymy wiersz k
-            factor = mat->data[i][k] / mat->data[k][k];
-
-            // Odejmowanie wiersza k od wiersza i w macierzy A
-            // Zaczynamy od j=k, bo elementy wczesniej sa juz wyzerowane
-            for(j = k; j < n; j++) {
-                mat->data[i][j] -= factor * mat->data[k][j];
+            for(k = i; k < mat->c; k++){
+                mat->data[j][k] -= factor * mat->data[i][k];
             }
-
-            // To samo odejmowanie dla wektora wynikow b
-            b->data[i][0] -= factor * b->data[k][0];
+            b->data[j][0] -= factor * b->data[i][0];
         }
     }
 
-    return 0; // Sukces
+    /* spr. ostatniego elementu na diagonalnej */
+    if(fabs(mat->data[mat->r - 1][mat->r - 1]) < 1e-12) return 1;
+
+    return 0;
 }
