@@ -6,6 +6,7 @@
  * Zwraca 1 - macierz osobliwa - dzielenie przez 0
  */
 int eliminate(Matrix *mat, Matrix *b){
+    //Algorytm wyboru elementu diagonalnego - Ola
     int n = mat->r;
     int k, i, j;
     double factor;
@@ -20,9 +21,34 @@ int eliminate(Matrix *mat, Matrix *b){
     // petla po kolumnach (krokach eliminacji)
     for(k = 0; k < n - 1; k++) {
         
-        // Sprawdzenie czy element na diagonalnej nie jest 0
-        if (mat->data[k][k] == 0) {
-            return 1; // Blad, mamy dzielenie przez 0 (macierz osobliwa)
+        // selekcja elementu diagonalnego
+        int max_row = k;
+        double max_val = fabs(mat->data[k][k]);
+        
+        // Szukamy wiersza z największą wartością bezwzględną w kolumnie k
+        for (i = k + 1; i < n; i++) {
+            if (fabs(mat->data[i][k]) > max_val) {
+                max_val = fabs(mat->data[i][k]);
+                max_row = i;
+            }
+        }
+
+        // Sprawdzenie osobliwości (jeśli największy element to 0, kolumna jest zerowa)
+        if (max_val < 1e-12) { // tolerancja
+            return 1;
+        }
+
+        // Zamiana wierszy, jeśli znaleziono lepszy pivot
+        if (max_row != k) {
+            // Zamiana wierszy w macierzy A
+            double *temp_row = mat->data[k];
+            mat->data[k] = mat->data[max_row];
+            mat->data[max_row] = temp_row;
+
+            // Zamiana wierszy w wektorze b
+            double *temp_b = b->data[k];
+            b->data[k] = b->data[max_row];
+            b->data[max_row] = temp_b;
         }
 
         // petla po wierszach 
@@ -40,6 +66,11 @@ int eliminate(Matrix *mat, Matrix *b){
             // To samo odejmowanie dla wektora wynikow b
             b->data[i][0] -= factor * b->data[k][0];
         }
+    }
+
+    // Ostatnie sprawdzenie elementu na samym dole przekątnej
+    if (fabs(mat->data[n-1][n-1]) < 1e-12) {
+        return 1;
     }
 
     return 0; // Sukces
